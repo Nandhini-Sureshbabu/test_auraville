@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Product } from "@/types/product";
 import { ProductCard } from "@/components/product/product-card";
 
@@ -15,6 +15,13 @@ function getVisibleCards() {
   return 2;
 }
 
+function isInteractiveTarget(target: EventTarget | null) {
+  return (
+    target instanceof Element &&
+    target.closest("button, a, input, select, textarea, label, [role='button']") !== null
+  );
+}
+
 export function ProductShelfCarousel({ products }: { products: Product[] }) {
   const visibleCards = useSyncExternalStore(subscribeToViewport, getVisibleCards, () => 2);
   const maxIndex = Math.max(0, products.length - visibleCards);
@@ -27,8 +34,19 @@ export function ProductShelfCarousel({ products }: { products: Product[] }) {
   const pointerIdRef = useRef<number | null>(null);
   const startXRef = useRef(0);
   const dragMovedRef = useRef(false);
+  const suppressClickRef = useRef(false);
+  const suppressTimerRef = useRef<number | null>(null);
 
   const clampedIndex = Math.min(active, maxIndex);
+
+  useEffect(
+    () => () => {
+      if (suppressTimerRef.current) {
+        window.clearTimeout(suppressTimerRef.current);
+      }
+    },
+    []
+  );
 
   function beginDrag(pointerId: number, clientX: number, target: HTMLDivElement) {
     pointerIdRef.current = pointerId;
@@ -55,6 +73,7 @@ export function ProductShelfCarousel({ products }: { products: Product[] }) {
     const finalOffset = typeof clientX === "number" ? clientX - startXRef.current : dragOffset;
     const width = viewportRef.current?.clientWidth ?? 0;
     const threshold = Math.max(34, Math.round(width * 0.11));
+    const shouldSuppressClick = dragMovedRef.current;
 
     if (finalOffset > threshold) {
       setActive((current) => Math.max(0, Math.min(current, maxIndex) - 1));
@@ -65,6 +84,18 @@ export function ProductShelfCarousel({ products }: { products: Product[] }) {
     setDragOffset(0);
     setIsDragging(false);
     pointerIdRef.current = null;
+    dragMovedRef.current = false;
+
+    if (shouldSuppressClick) {
+      suppressClickRef.current = true;
+      if (suppressTimerRef.current) {
+        window.clearTimeout(suppressTimerRef.current);
+      }
+      suppressTimerRef.current = window.setTimeout(() => {
+        suppressClickRef.current = false;
+        suppressTimerRef.current = null;
+      }, 0);
+    }
   }
 
   const canNavigate = maxIndex > 0;
@@ -78,6 +109,7 @@ export function ProductShelfCarousel({ products }: { products: Product[] }) {
         onPointerCancel={() => endDrag()}
         onPointerDown={(event) => {
           if (event.pointerType === "mouse" && event.button !== 0) return;
+          if (isInteractiveTarget(event.target)) return;
           beginDrag(event.pointerId, event.clientX, event.currentTarget);
         }}
         onPointerMove={(event) => moveDrag(event.pointerId, event.clientX)}
@@ -99,7 +131,7 @@ export function ProductShelfCarousel({ products }: { products: Product[] }) {
               className="shrink-0 basis-1/2 px-2 md:basis-1/3 md:px-2.5 xl:basis-1/4 xl:px-3"
               key={product.id}
               onClickCapture={(event) => {
-                if (dragMovedRef.current) {
+                if (suppressClickRef.current) {
                   event.preventDefault();
                   event.stopPropagation();
                 }
