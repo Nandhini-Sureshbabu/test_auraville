@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import type { Product } from "@/types/product";
-import { Price } from "@/components/ui/price";
+import { PriceWithCompare } from "@/components/ui/price";
 import { useCartStore } from "@/stores/cart-store";
 
 type ProductCardProps = {
@@ -16,6 +16,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const isAvailable = product.availability === "available";
   const items = useCartStore((state) => state.items);
   const addItem = useCartStore((state) => state.addItem);
+  const openDrawer = useCartStore((state) => state.openDrawer);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
   const variant = product.variants[0];
@@ -28,7 +29,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const [notifyContact, setNotifyContact] = useState("");
   const [notifyStatus, setNotifyStatus] = useState("");
 
-  function addToCart() {
+  function addToCart(openCart = false) {
     if (!variant) return;
     addItem({
       productId: product.id,
@@ -40,6 +41,9 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
       unitPrice: variant.price,
       quantity: 1
     });
+    if (openCart) {
+      openDrawer();
+    }
   }
 
   function decreaseQuantity() {
@@ -110,16 +114,24 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
           <span>{variant?.label ?? "Pack"}</span>
           <span aria-label={`${product.rating.toFixed(1)} star rating`}>★ {product.rating.toFixed(1)}</span>
         </div>
-        <p className="mt-2 text-sm font-bold sm:text-base">
-          {isAvailable ? <Price currency={product.currency} value={product.price} /> : "Coming Soon"}
-        </p>
+        <div className="mt-2 text-sm sm:text-base">
+          {isAvailable ? (
+            <PriceWithCompare
+              compareAtPrice={product.compareAtPrice}
+              currency={product.currency}
+              value={product.price}
+            />
+          ) : (
+            <p className="font-bold">Coming Soon</p>
+          )}
+        </div>
 
         {isAvailable ? (
           quantity === 0 ? (
             <button
               className="focus-ring mt-3 inline-flex h-9 w-full items-center justify-center rounded-lg border border-[var(--leaf)] bg-[var(--leaf)] px-3 text-xs font-semibold text-white transition active:scale-95 sm:h-10 sm:text-sm"
               type="button"
-              onClick={addToCart}
+              onClick={() => addToCart(true)}
             >
               Add to Cart
             </button>

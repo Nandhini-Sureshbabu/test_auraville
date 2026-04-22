@@ -8,43 +8,66 @@ const slides = [
   {
     title: "Bringing palmyra sprout back to the snack shelf.",
     image: "/hero/palmyra-energy.svg",
-    href: "/product/palmyra-sprout-energy-bar"
+    href: "/product/palmyra-sprout-energy-bar",
+    objectPosition: "50% 50%"
   },
   {
     title: "Palmyra sprout cookies coming soon.",
     image: "/hero/palmyra-cookies.svg",
-    href: "/product/palmyra-sprout-cookies"
+    href: "/product/palmyra-sprout-cookies",
+    objectPosition: "54% 50%"
   },
   {
     title: "Palmyra health mix coming soon.",
     image: "/hero/palmyra-health-mix.svg",
-    href: "/product/palmyra-sprout-health-mix"
+    href: "/product/palmyra-sprout-health-mix",
+    objectPosition: "54% 50%"
   },
   {
     title: "Palmyra sprout laddu coming soon.",
     image: "/hero/palmyra-laddu.svg",
-    href: "/product/palmyra-sprout-laddu"
+    href: "/product/palmyra-sprout-laddu",
+    objectPosition: "50% 50%"
   }
 ];
 
 export function HeroSlideshow() {
-  const [active, setActive] = useState(0);
+  const slideCount = slides.length;
+  const loopSlides = [slides[slideCount - 1], ...slides, slides[0]];
+
+  const [position, setPosition] = useState(1);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isTransitionEnabled, setIsTransitionEnabled] = useState(true);
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const pointerIdRef = useRef<number | null>(null);
   const startXRef = useRef(0);
   const dragMovedRef = useRef(false);
+  const positionRef = useRef(position);
 
   useEffect(() => {
-    if (isDragging) return;
+    positionRef.current = position;
+  }, [position]);
+
+  useEffect(() => {
+    if (isDragging || !isTransitionEnabled) return;
     const timer = window.setInterval(() => {
-      setActive((current) => (current + 1) % slides.length);
+      setPosition((current) => current + 1);
     }, 5500);
 
     return () => window.clearInterval(timer);
-  }, [isDragging]);
+  }, [isDragging, isTransitionEnabled]);
+
+  function silentJump(nextPosition: number) {
+    setIsTransitionEnabled(false);
+    setPosition(nextPosition);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setIsTransitionEnabled(true);
+      });
+    });
+  }
 
   function beginDrag(pointerId: number, clientX: number, target: HTMLDivElement) {
     pointerIdRef.current = pointerId;
@@ -73,9 +96,9 @@ export function HeroSlideshow() {
     const threshold = Math.max(40, Math.round(width * 0.12));
 
     if (finalOffset > threshold) {
-      setActive((current) => (current - 1 + slides.length) % slides.length);
+      setPosition((current) => current - 1);
     } else if (finalOffset < -threshold) {
-      setActive((current) => (current + 1) % slides.length);
+      setPosition((current) => current + 1);
     }
 
     setDragOffset(0);
@@ -86,7 +109,7 @@ export function HeroSlideshow() {
   return (
     <section className="relative overflow-hidden bg-[var(--leaf-deep)]">
       <div
-        className="relative aspect-[16/10] w-full max-h-[480px] sm:aspect-[16/8.2] sm:max-h-[560px] lg:max-h-[620px]"
+        className="relative aspect-[1440/780] w-full max-h-[620px]"
         ref={viewportRef}
         style={{ touchAction: "pan-y" }}
         onPointerCancel={() => endDrag()}
@@ -103,17 +126,27 @@ export function HeroSlideshow() {
         }}
       >
         <div
-          className={`flex h-full ${isDragging ? "" : "transition-transform duration-500 ease-out"}`}
+          className={`flex h-full ${isDragging || !isTransitionEnabled ? "" : "transition-transform duration-500 ease-out"}`}
           style={{
-            transform: `translate3d(calc(-${active * 100}% + ${dragOffset}px), 0, 0)`
+            transform: `translate3d(calc(-${position * 100}% + ${dragOffset}px), 0, 0)`
+          }}
+          onTransitionEnd={(event) => {
+            if (event.target !== event.currentTarget || event.propertyName !== "transform") return;
+
+            const current = positionRef.current;
+            if (current === slideCount + 1) {
+              silentJump(1);
+            } else if (current === 0) {
+              silentJump(slideCount);
+            }
           }}
         >
-          {slides.map((item) => (
+          {loopSlides.map((item, index) => (
             <Link
               aria-label={item.title}
               className="relative block min-w-full shrink-0"
               href={item.href}
-              key={item.title}
+              key={`${item.title}-${index}`}
               onClick={(event) => {
                 if (dragMovedRef.current) {
                   event.preventDefault();
@@ -122,32 +155,17 @@ export function HeroSlideshow() {
             >
               <Image
                 alt={item.title}
-                className="object-contain select-none"
+                className="object-cover object-center select-none"
                 draggable={false}
                 fill
-                priority={item.image === slides[0].image}
+                priority={index <= 2}
                 sizes="100vw"
                 src={item.image}
+                style={{ objectPosition: item.objectPosition }}
               />
             </Link>
           ))}
         </div>
-      </div>
-      <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2" aria-label="Hero slides">
-        {slides.map((item, index) => (
-          <button
-            aria-label={`Show ${item.title}`}
-            className={`focus-ring h-2.5 rounded-full transition active:scale-90 ${
-              index === active ? "w-9 bg-white" : "w-2.5 bg-white/55"
-            }`}
-            key={item.title}
-            type="button"
-            onClick={() => {
-              setActive(index);
-              setDragOffset(0);
-            }}
-          />
-        ))}
       </div>
     </section>
   );

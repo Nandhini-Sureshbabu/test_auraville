@@ -5,7 +5,7 @@ import Image from "next/image";
 import type { Product } from "@/types/product";
 import { useCartStore } from "@/stores/cart-store";
 import { Button } from "@/components/ui/button";
-import { Price } from "@/components/ui/price";
+import { Price, PriceWithCompare } from "@/components/ui/price";
 import { QuantityStepper } from "@/components/ui/quantity-stepper";
 
 export function ProductPurchasePanel({ product }: { product: Product }) {
@@ -14,11 +14,17 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
   const [status, setStatus] = useState("");
   const addItem = useCartStore((state) => state.addItem);
+  const openDrawer = useCartStore((state) => state.openDrawer);
 
   const selectedVariant = useMemo(
     () => product.variants.find((variant) => variant.id === variantId) ?? product.variants[0],
     [product.variants, variantId]
   );
+  const compareAtForVariant = useMemo(() => {
+    if (!product.compareAtPrice || product.compareAtPrice <= product.price) return undefined;
+    const ratio = product.compareAtPrice / product.price;
+    return Math.round(selectedVariant.price * ratio);
+  }, [product.compareAtPrice, product.price, selectedVariant.price]);
 
   function addToCart() {
     if (!isAvailable) {
@@ -37,6 +43,7 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
       quantity
     });
     setStatus(`${product.name} added to cart.`);
+    openDrawer();
   }
 
   return (
@@ -90,13 +97,18 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
             )}
           </div>
         </div>
-        <p className="text-2xl font-semibold">
+        <div className="text-2xl">
           {isAvailable ? (
-            <Price currency={product.currency} value={selectedVariant.price * quantity} />
+            <PriceWithCompare
+              compareAtPrice={compareAtForVariant ? compareAtForVariant * quantity : undefined}
+              currency={product.currency}
+              showSavingsPill={false}
+              value={selectedVariant.price * quantity}
+            />
           ) : (
-            "Coming soon"
+            <p className="font-semibold">Coming soon</p>
           )}
-        </p>
+        </div>
       </div>
 
       <Button className="mt-6 w-full" disabled={!isAvailable} type="button" onClick={addToCart}>

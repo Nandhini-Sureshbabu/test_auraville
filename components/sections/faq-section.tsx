@@ -45,7 +45,7 @@ export function FaqSection() {
       <h2 id="faq-title" className="text-center text-3xl font-bold sm:text-4xl">
         FAQs
       </h2>
-      <div className="mt-8 space-y-3">
+      <div className="mx-auto mt-8 w-full max-w-[830px] space-y-3">
         {faqItems.map((item, index) => {
           const isOpen = index === openIndex;
           return (

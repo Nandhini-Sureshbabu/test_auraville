@@ -20,15 +20,15 @@ const announcements = [
 export function AnnouncementBar() {
   return (
     <section className="bg-[var(--coral)] py-3 text-white" aria-label="Store announcements">
-      <div className="container-page grid grid-cols-1 gap-2 min-[440px]:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+      <div className="container-page grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
         {announcements.map((item) => (
-          <div className="flex items-center gap-2.5 rounded-lg px-1 py-1" key={item.text}>
+          <div className="flex min-h-10 items-center gap-2.5 rounded-lg px-1 py-1" key={item.text}>
             <svg aria-hidden="true" className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none">
               <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8">
                 {item.icon}
               </g>
             </svg>
-            <p className="text-[11px] font-semibold leading-4 sm:text-xs">{item.text}</p>
+            <p className="text-[10px] font-semibold leading-4 sm:text-xs">{item.text}</p>
           </div>
         ))}
       </div>

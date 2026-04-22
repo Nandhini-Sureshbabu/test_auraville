@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ProductJsonLd } from "@/components/product/product-json-ld";
 import { ProductPurchasePanel } from "@/components/product/product-purchase-panel";
 import { ProductCard } from "@/components/product/product-card";
-import { Price } from "@/components/ui/price";
+import { PriceWithCompare } from "@/components/ui/price";
 import { getProductBySlug, getRelatedProducts, products } from "@/lib/products";
 import { absoluteUrl } from "@/lib/site";
 
@@ -110,9 +110,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {product.name}
           </h1>
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <p className="text-xl font-semibold">
-              {isAvailable ? <Price currency={product.currency} value={product.price} /> : "Coming soon"}
-            </p>
+            <div className="text-xl">
+              {isAvailable ? (
+                <PriceWithCompare
+                  compareAtPrice={product.compareAtPrice}
+                  currency={product.currency}
+                  value={product.price}
+                />
+              ) : (
+                <p className="font-semibold">Coming soon</p>
+              )}
+            </div>
             <span className="rounded-full bg-[var(--mint)] px-3 py-1 text-sm font-bold text-[var(--leaf-deep)]">
               {isAvailable ? "Available now" : product.releaseNote ?? "Coming soon"}
             </span>

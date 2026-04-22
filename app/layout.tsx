@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { CartDrawer } from "@/components/cart/cart-drawer";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { absoluteUrl, siteConfig } from "@/lib/site";
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Header />
         <main>{children}</main>
         <Footer />
+        <CartDrawer />
       </body>
     </html>
   );

@@ -95,6 +95,25 @@ textarea {
   }
 }
 
+@keyframes toastPulse {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
 .marquee-track {
   animation: marquee 18s linear infinite;
   width: max-content;

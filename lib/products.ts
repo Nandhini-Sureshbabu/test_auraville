@@ -19,6 +19,7 @@ export const products: Product[] = [
     longDescription:
       "Our first launch brings palmyra sprout back into the daily snack shelf. This bar is built for school bags, office drawers, workouts, and travel: familiar Indian ingredients, clean sweetness, and a texture that feels satisfying without being heavy.",
     price: 149,
+    compareAtPrice: 166,
     currency: "INR",
     image:
       "https://images.unsplash.com/photo-1632370161597-9c8429934d1b?auto=format&fit=crop&w=1200&q=82",
@@ -32,6 +33,7 @@ export const products: Product[] = [
     reviewCount: 126,
     isFeatured: true,
     isNew: true,
+    badgeLabel: "Low Stock",
     popularity: 100,
     ingredients: ["Palmyra sprout", "Dates", "Peanuts", "Pumpkin seeds", "Jaggery", "Cardamom"],
     benefits: ["Made with palmyra sprout", "No refined sugar", "Travel friendly"],
@@ -51,6 +53,7 @@ export const products: Product[] = [
     longDescription:
       "These cookies are being developed as a better tea-time snack: crisp edges, gentle sweetness, and the familiar comfort of a biscuit with the added story of palmyra sprout.",
     price: 249,
+    compareAtPrice: 276,
     currency: "INR",
     image:
       "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=1200&q=82",
@@ -65,6 +68,7 @@ export const products: Product[] = [
     reviewCount: 0,
     isFeatured: true,
     isNew: true,
+    badgeLabel: "Subscription Favorite",
     popularity: 92,
     ingredients: ["Palmyra sprout flour", "Millet", "Jaggery", "Roasted peanuts", "Cardamom"],
     benefits: ["Tea-time snack", "Heritage ingredient", "No artificial flavors"],
@@ -83,6 +87,7 @@ export const products: Product[] = [
     longDescription:
       "The health mix is designed for families who want one reliable breakfast base. Stir it into warm milk or water for porridge, or blend it into smoothies when mornings are moving fast.",
     price: 399,
+    compareAtPrice: 443,
     currency: "INR",
     image:
       "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?auto=format&fit=crop&w=1200&q=82",
@@ -97,6 +102,7 @@ export const products: Product[] = [
     reviewCount: 0,
     isFeatured: true,
     isNew: false,
+    badgeLabel: "Bestseller Pick",
     popularity: 88,
     ingredients: ["Palmyra sprout", "Sprouted ragi", "Green gram", "Almonds", "Cardamom"],
     benefits: ["Family breakfast", "Sprouted grains", "Warm or cold prep"],
@@ -115,6 +121,7 @@ export const products: Product[] = [
     longDescription:
       "Palmyra Sprout Laddu takes the comfort of a traditional sweet and turns it into a cleaner daily snack. The recipe is being balanced for richness, texture, and a gentle sweetness that does not overpower the main ingredient.",
     price: 299,
+    compareAtPrice: 332,
     currency: "INR",
     image:
       "https://images.unsplash.com/photo-1769576918185-f4f57316d78a?auto=format&fit=crop&w=1200&q=82",
@@ -129,6 +136,7 @@ export const products: Product[] = [
     reviewCount: 0,
     isFeatured: true,
     isNew: false,
+    badgeLabel: "Bundle Deal",
     popularity: 86,
     ingredients: ["Palmyra sprout", "Sesame", "Peanut", "Coconut", "Jaggery"],
     benefits: ["Traditional format", "No refined sugar", "Festival-ready"],
@@ -147,6 +155,7 @@ export const products: Product[] = [
     longDescription:
       "Breakfast Bites are being built as a soft, quick snack for school tiffins, commutes, and mid-morning breaks. The goal is simple: heritage nutrition in a familiar bite-sized shape.",
     price: 349,
+    compareAtPrice: 388,
     currency: "INR",
     image:
       "https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?auto=format&fit=crop&w=1200&q=82",
@@ -161,6 +170,7 @@ export const products: Product[] = [
     reviewCount: 0,
     isFeatured: false,
     isNew: true,
+    badgeLabel: "New Arrival",
     popularity: 76,
     ingredients: ["Palmyra sprout", "Banana", "Oats", "Peanut butter", "Jaggery"],
     benefits: ["Kid friendly", "Soft texture", "Tiffin ready"],
@@ -179,6 +189,7 @@ export const products: Product[] = [
     longDescription:
       "The starter box will make the full Auraville range easy to try or gift. It is planned as a compact introduction to palmyra sprout across snacks, breakfast, and sweets.",
     price: 999,
+    compareAtPrice: 1110,
     currency: "INR",
     image:
       "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=1200&q=82",
@@ -193,6 +204,7 @@ export const products: Product[] = [
     reviewCount: 0,
     isFeatured: false,
     isNew: true,
+    badgeLabel: "Bundle Deal",
     popularity: 70,
     ingredients: ["Palmyra sprout", "Millets", "Dates", "Nuts", "Jaggery"],
     benefits: ["Giftable", "Full range trial", "Launch bundle"],

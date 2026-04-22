@@ -6,10 +6,15 @@ import type { CartItem } from "@/types/product";
 
 type CartState = {
   items: CartItem[];
+  isDrawerOpen: boolean;
+  cartNotice: string | null;
+  cartNoticeKey: number;
   addItem: (item: CartItem) => void;
   removeItem: (productId: string, variantId: string) => void;
   updateQuantity: (productId: string, variantId: string, quantity: number) => void;
   clearCart: () => void;
+  openDrawer: () => void;
+  closeDrawer: () => void;
 };
 
 function itemKey(item: Pick<CartItem, "productId" | "variantId">) {
@@ -20,12 +25,20 @@ export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       items: [],
+      isDrawerOpen: false,
+      cartNotice: null,
+      cartNoticeKey: 0,
       addItem: (item) =>
         set((state) => {
           const existing = state.items.find((cartItem) => itemKey(cartItem) === itemKey(item));
+          const message = `${item.name} added to cart`;
 
           if (!existing) {
-            return { items: [...state.items, item] };
+            return {
+              items: [...state.items, item],
+              cartNotice: message,
+              cartNoticeKey: state.cartNoticeKey + 1
+            };
           }
 
           return {
@@ -33,7 +46,9 @@ export const useCartStore = create<CartState>()(
               itemKey(cartItem) === itemKey(item)
                 ? { ...cartItem, quantity: cartItem.quantity + item.quantity }
                 : cartItem
-            )
+            ),
+            cartNotice: message,
+            cartNoticeKey: state.cartNoticeKey + 1
           };
         }),
       removeItem: (productId, variantId) =>
@@ -48,7 +63,9 @@ export const useCartStore = create<CartState>()(
               : cartItem
           )
         })),
-      clearCart: () => set({ items: [] })
+      clearCart: () => set({ items: [] }),
+      openDrawer: () => set({ isDrawerOpen: true }),
+      closeDrawer: () => set({ isDrawerOpen: false })
     }),
     {
       name: "auraville-cart",

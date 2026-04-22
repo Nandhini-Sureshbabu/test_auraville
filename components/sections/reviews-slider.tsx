@@ -1,35 +1,58 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Button } from "@/components/ui/button";
+import { Input, Textarea } from "@/components/ui/input";
+import { useAuthStore } from "@/stores/auth-store";
 
-const reviews = [
+type Review = {
+  id: string;
+  name: string;
+  subject: string;
+  text: string;
+  rating: number;
+};
+
+const baseReviews: Review[] = [
   {
+    id: "anika",
     name: "Anika R.",
+    subject: "Balanced sweetness",
     rating: 5,
     text: "The energy bar feels clean and filling without being too sweet. Easy daily snack."
   },
   {
+    id: "dev",
     name: "Dev M.",
+    subject: "Honest launch",
     rating: 4,
     text: "Good ingredient profile and honest launch approach. Looking forward to the cookies."
   },
   {
+    id: "meera",
     name: "Meera S.",
+    subject: "Great ingredient story",
     rating: 5,
     text: "Palmyra sprout in a modern format is exactly what I wanted for office snacking."
   },
   {
+    id: "pranav",
     name: "Pranav K.",
+    subject: "Works on busy days",
     rating: 4,
     text: "Texture is solid and travel-friendly. Works well for pre-workout days."
   },
   {
+    id: "ishita",
     name: "Ishita N.",
+    subject: "Clean label",
     rating: 5,
     text: "Loved the taste and clean label. The brand story also feels meaningful."
   },
   {
+    id: "harish",
     name: "Harish V.",
+    subject: "Reliable quality",
     rating: 4,
     text: "Simple product, good quality, and straightforward checkout experience."
   }
@@ -44,31 +67,79 @@ function getVisibleCards() {
   return window.innerWidth >= 1024 ? 3 : 1;
 }
 
-export function ReviewsSlider() {
-  const visibleCards = useSyncExternalStore(subscribeToViewport, getVisibleCards, () => 1);
-  const maxIndex = Math.max(0, reviews.length - visibleCards);
+function displayNameFromEmail(email: string) {
+  const local = email.split("@")[0] ?? "Auraville User";
+  return local.replace(/[._-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
 
-  const [active, setActive] = useState(0);
+export function ReviewsSlider() {
+  const user = useAuthStore((state) => state.user);
+  const visibleCards = useSyncExternalStore(subscribeToViewport, getVisibleCards, () => 1);
+
+  const [reviews, setReviews] = useState<Review[]>(baseReviews);
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [rating, setRating] = useState(5);
+  const [formMessage, setFormMessage] = useState("");
+
+  const cloneCount = Math.min(visibleCards, reviews.length);
+  const loopReviews = useMemo(() => {
+    if (reviews.length === 0) return [];
+    if (reviews.length <= visibleCards) return reviews;
+    const head = reviews.slice(0, cloneCount);
+    const tail = reviews.slice(-cloneCount);
+    return [...tail, ...reviews, ...head];
+  }, [cloneCount, reviews, visibleCards]);
+
+  const [offset, setOffset] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isTransitionEnabled, setIsTransitionEnabled] = useState(true);
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const pointerIdRef = useRef<number | null>(null);
   const startXRef = useRef(0);
-  const currentIndex = Math.min(active, maxIndex);
+  const offsetRef = useRef(offset);
+
+  const canSlide = reviews.length > visibleCards;
+  const trackIndex = canSlide ? offset + cloneCount : 0;
 
   useEffect(() => {
-    if (isDragging) return;
+    offsetRef.current = offset;
+  }, [offset]);
+
+  useEffect(() => {
+    if (!canSlide || isDragging || !isTransitionEnabled) return;
     const timer = window.setInterval(() => {
-      setActive((current) => {
-        const safeCurrent = Math.min(current, maxIndex);
-        return safeCurrent >= maxIndex ? 0 : safeCurrent + 1;
-      });
-    }, 4500);
+      setOffset((current) => current + 1);
+    }, 4300);
     return () => window.clearInterval(timer);
-  }, [isDragging, maxIndex]);
+  }, [canSlide, isDragging, isTransitionEnabled]);
+
+  useEffect(() => {
+    if (!isComposerOpen) return;
+    function onEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsComposerOpen(false);
+      }
+    }
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [isComposerOpen]);
+
+  function silentJump(nextOffset: number) {
+    setIsTransitionEnabled(false);
+    setOffset(nextOffset);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setIsTransitionEnabled(true);
+      });
+    });
+  }
 
   function beginDrag(pointerId: number, clientX: number, target: HTMLDivElement) {
+    if (!canSlide) return;
     pointerIdRef.current = pointerId;
     startXRef.current = clientX;
     target.setPointerCapture(pointerId);
@@ -87,12 +158,12 @@ export function ReviewsSlider() {
 
     const finalOffset = typeof clientX === "number" ? clientX - startXRef.current : dragOffset;
     const width = viewportRef.current?.clientWidth ?? 0;
-    const threshold = Math.max(40, Math.round(width * 0.12));
+    const threshold = Math.max(40, Math.round(width * 0.11));
 
     if (finalOffset > threshold) {
-      setActive((current) => Math.max(0, Math.min(current, maxIndex) - 1));
+      setOffset((current) => current - 1);
     } else if (finalOffset < -threshold) {
-      setActive((current) => Math.min(maxIndex, Math.min(current, maxIndex) + 1));
+      setOffset((current) => current + 1);
     }
 
     setDragOffset(0);
@@ -100,13 +171,42 @@ export function ReviewsSlider() {
     pointerIdRef.current = null;
   }
 
+  function submitReview(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!subject.trim() || !body.trim()) {
+      setFormMessage("Please complete both subject and review text.");
+      return;
+    }
+
+    const nextReview: Review = {
+      id: `${Date.now()}`,
+      name: user?.name?.trim() || (user?.email ? displayNameFromEmail(user.email) : "Auraville Customer"),
+      subject: subject.trim(),
+      text: body.trim(),
+      rating
+    };
+
+    setReviews((current) => [nextReview, ...current]);
+    setSubject("");
+    setBody("");
+    setRating(5);
+    setFormMessage("Thank you. Your review is now visible.");
+    setIsComposerOpen(false);
+  }
+
   return (
     <section className="container-page py-12 sm:py-16" aria-labelledby="reviews-title">
-      <h2 id="reviews-title" className="text-center text-2xl font-bold sm:text-3xl">
-        Reviews
-      </h2>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <h2 id="reviews-title" className="text-2xl font-bold sm:text-3xl">
+          Reviews
+        </h2>
+        <Button type="button" variant="secondary" onClick={() => setIsComposerOpen(true)}>
+          Write a Review
+        </Button>
+      </div>
+
       <div
-        className="relative mt-8 overflow-hidden rounded-lg border border-[var(--line)] bg-white"
+        className="relative mt-6 overflow-hidden"
         ref={viewportRef}
         style={{ touchAction: "pan-y" }}
         onPointerCancel={() => endDrag()}
@@ -123,38 +223,131 @@ export function ReviewsSlider() {
         }}
       >
         <div
-          className={`flex ${isDragging ? "" : "transition-transform duration-500 ease-out"}`}
+          className={`-mx-2 flex ${isDragging || !isTransitionEnabled ? "" : "transition-transform duration-500 ease-out"} lg:-mx-2.5`}
           style={{
-            transform: `translate3d(calc(-${(currentIndex * 100) / visibleCards}% + ${dragOffset}px), 0, 0)`
+            transform: `translate3d(calc(-${(trackIndex * 100) / visibleCards}% + ${dragOffset}px), 0, 0)`
+          }}
+          onTransitionEnd={(event) => {
+            if (!canSlide) return;
+            if (event.target !== event.currentTarget || event.propertyName !== "transform") return;
+
+            const current = offsetRef.current;
+            if (current >= reviews.length) {
+              silentJump(0);
+            } else if (current < 0) {
+              silentJump(reviews.length - 1);
+            }
           }}
         >
-          {reviews.map((review) => (
+          {loopReviews.map((review, loopIndex) => (
             <article
-              className={`shrink-0 border-r border-[var(--line)] p-5 ${visibleCards === 3 ? "w-1/3" : "w-full"}`}
-              key={`${review.name}-${review.text}`}
+              className="shrink-0 basis-full px-2 lg:basis-1/3 lg:px-2.5"
+              key={`${review.id}-${loopIndex}`}
             >
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-bold">{review.name}</h3>
-                <p className="text-sm font-semibold text-[var(--leaf-deep)]">
-                  {"★".repeat(review.rating)}
-                </p>
+              <div className="h-full rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold">{review.name}</p>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
+                      {review.subject}
+                    </p>
+                  </div>
+                  <p className="text-sm font-semibold text-[var(--leaf-deep)]">{"★".repeat(review.rating)}</p>
+                </div>
+                <p className="mt-4 text-sm leading-6 text-[var(--muted)]">{review.text}</p>
               </div>
-              <p className="mt-4 text-sm leading-6 text-[var(--muted)]">{review.text}</p>
             </article>
           ))}
         </div>
+
+        {canSlide ? (
+          <>
+            <button
+              aria-label="Show previous reviews"
+              className="focus-ring absolute left-0 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--line)] bg-white/95 text-lg text-[var(--leaf-deep)] shadow-sm transition active:scale-95 md:inline-flex"
+              type="button"
+              onClick={() => setOffset((current) => current - 1)}
+            >
+              ‹
+            </button>
+            <button
+              aria-label="Show next reviews"
+              className="focus-ring absolute right-0 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--line)] bg-white/95 text-lg text-[var(--leaf-deep)] shadow-sm transition active:scale-95 md:inline-flex"
+              type="button"
+              onClick={() => setOffset((current) => current + 1)}
+            >
+              ›
+            </button>
+          </>
+        ) : null}
       </div>
-      <div className="mt-4 flex justify-center gap-2">
-        {Array.from({ length: maxIndex + 1 }).map((_, index) => (
+
+      {isComposerOpen ? (
+        <div className="fixed inset-0 z-[140] flex items-end justify-center bg-black/35 p-4 sm:items-center">
           <button
-            aria-label={`Go to review group ${index + 1}`}
-            className={`h-2.5 rounded-full transition ${index === currentIndex ? "w-8 bg-[var(--leaf-deep)]" : "w-2.5 bg-[var(--line)]"}`}
-            key={index}
+            aria-label="Close review composer"
+            className="absolute inset-0"
             type="button"
-            onClick={() => setActive(index)}
+            onClick={() => setIsComposerOpen(false)}
           />
-        ))}
-      </div>
+          <div className="relative z-10 w-full max-w-lg rounded-lg border border-[var(--line)] bg-white p-5 sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-xl font-semibold">Write a Review</h3>
+              <button
+                aria-label="Close review composer"
+                className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--line)] text-lg transition active:scale-95"
+                type="button"
+                onClick={() => setIsComposerOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <form className="mt-5 space-y-4" onSubmit={submitReview}>
+              <label className="block">
+                <span className="text-sm font-semibold">Subject</span>
+                <Input className="mt-2" value={subject} onChange={(event) => setSubject(event.target.value)} />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold">Review</span>
+                <Textarea className="mt-2 min-h-28" value={body} onChange={(event) => setBody(event.target.value)} />
+              </label>
+
+              <div>
+                <p className="text-sm font-semibold">Rating</p>
+                <div className="mt-2 flex items-center gap-1">
+                  {Array.from({ length: 5 }).map((_, idx) => {
+                    const nextRating = idx + 1;
+                    return (
+                      <button
+                        aria-label={`Rate ${nextRating} stars`}
+                        className={`focus-ring text-2xl leading-none transition ${
+                          nextRating <= rating ? "text-[var(--gold)]" : "text-[var(--line)]"
+                        }`}
+                        key={nextRating}
+                        type="button"
+                        onClick={() => setRating(nextRating)}
+                      >
+                        ★
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <Button className="w-full" type="submit">
+                Submit Review
+              </Button>
+            </form>
+          </div>
+        </div>
+      ) : null}
+
+      {formMessage ? (
+        <p className="mt-4 text-sm font-semibold text-[var(--leaf-deep)]" role="status" aria-live="polite">
+          {formMessage}
+        </p>
+      ) : null}
     </section>
   );
 }

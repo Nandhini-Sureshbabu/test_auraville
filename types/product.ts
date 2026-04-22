@@ -20,6 +20,8 @@ export type Product = {
   description: string;
   longDescription: string;
   price: number;
+  compareAtPrice?: number;
+  promoLabel?: string;
   currency: "INR";
   image: string;
   gallery: string[];
@@ -30,6 +32,7 @@ export type Product = {
   reviewCount: number;
   isFeatured: boolean;
   isNew: boolean;
+  badgeLabel?: string;
   popularity: number;
   ingredients: string[];
   benefits: string[];
